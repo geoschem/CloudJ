@@ -30,7 +30,7 @@
       SUBROUTINE CLOUD_JX (U0,SZA,RFL,SOLF,LPRTJ,PPP,ZZZ,TTT,HHH,DDD,  &
              RRR,OOO,CCC, LWP,IWP,REFFL,REFFI, CLDF,CLDCOR,CLDIW,      &
              AERSP,NDXAER,L1U,ANU,NJXU, VALJXX,SKPERD,SWMSQ,OD18,      &
-             IRAN,NICA, JCOUNT,LDARK,WTQCA,RC)
+             IRAN,NICA, JCOUNT,LDARK,WTQCA,RC,FSBOT,FJXBOT,FLXD,FJFLX )
 
 !---Current recommendation for best average J's is
 !     1) cloud decorellation w/ max-overlap blocks:  LNRG = 6 and CLDCOR = 0.33
@@ -120,15 +120,20 @@
       real*8,  intent(in), dimension(L1U  )  :: CLDF
       integer, intent(in), dimension(L1U  )  :: CLDIW
 ! reports out the JX J-values, upper level program converts to CTM chemistry J's
-      real*8,intent(out), dimension(L1U-1,NJXU):: VALJXX
-      real*8,  intent(out), dimension(S_+2,L1U):: SKPERD
-      real*8,  intent(out), dimension(6)       :: SWMSQ
-      real*8,  intent(out), dimension(L1U)     :: OD18
-      real*8,  intent(out), dimension(NQD_)    :: WTQCA
-      integer, intent(out)                     :: NICA
-      integer, intent(out)                     :: JCOUNT
-      logical, intent(out)                     :: LDARK
-      integer, intent(out)                     :: RC
+      real*8,intent(out), dimension(L1U-1,NJXU)   :: VALJXX
+      real*8,  intent(out), dimension(S_+2,L1U)   :: SKPERD
+      real*8,  intent(out), dimension(6)          :: SWMSQ
+      real*8,  intent(out), dimension(L1U)        :: OD18
+      real*8,  intent(out), dimension(NQD_)       :: WTQCA
+      integer, intent(out)                        :: NICA
+      integer, intent(out)                        :: JCOUNT
+      logical, intent(out)                        :: LDARK
+      integer, intent(out)                        :: RC
+      real*8,  intent(out), dimension(W_+W_r),     optional :: FSBOT
+      real*8,  intent(out), dimension(W_+W_r),     optional :: FJXBOT
+      real*8,  intent(out), dimension(L1U,W_+W_r), optional :: FLXD
+      real*8,  intent(out), dimension(L1U,W_+W_r), optional :: FJFLX
+
 !-----------------------------------------------------------------------
       character(len=255)          :: thisloc
       logical  LPRTJ0
@@ -222,7 +227,8 @@
 !-----------------------------------------------------------------------
          call PHOTO_JX (U0,SZA,RFL,SOLF, LPRTJ0, PPP,ZZZ,TTT,HHH,       &
                   DDD,RRR,OOO,CCC, LWPX,IWPX,REFFLX,REFFIX,AERSP,       &
-                  NDXAER, L1U,ANU,NJXU, VALJXX,SKPERD,SWMSQ,OD18, LDARK, RC)
+                  NDXAER, L1U,ANU,NJXU, VALJXX,SKPERD,SWMSQ,OD18,       &
+                  LDARK, FSBOT, FJXBOT, FLXD, FJFLX, RC)
          if (.not.LDARK) then
             JCOUNT = JCOUNT + 1
          endif
@@ -331,7 +337,8 @@
 !-----------------------------------------------------------------------
                call PHOTO_JX (U0,SZA,RFL,SOLF, LPRTJ0, PPP,ZZZ,TTT,HHH,     &
                      DDD,RRR,OOO,CCC, LWPX,IWPX,REFFLX,REFFIX,AERSP,        &
-                     NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q, LDARK,RC)
+                     NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q,    &
+                     LDARK,FSBOT, FJXBOT, FLXD, FJFLX,RC)
                if (.not.LDARK) then
                   JCOUNT = JCOUNT + 1
                endif
@@ -393,7 +400,8 @@
 !-----------------------------------------------------------------------
                   call PHOTO_JX (U0,SZA,RFL,SOLF, LPRTJ0, PPP,ZZZ,TTT,HHH, &
                    DDD,RRR,OOO,CCC, LWPX,IWPX,REFFLX,REFFIX,AERSP,     &
-                   NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q, LDARK, RC)
+                   NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q, &
+                   LDARK, FSBOT, FJXBOT, FLXD, FJFLX, RC)
                   if (.not.LDARK) then
                      JCOUNT = JCOUNT + 1
                   endif
@@ -474,9 +482,11 @@
                      endif
 
 !-----------------------------------------------------------------------
+
                      call PHOTO_JX (U0,SZA,RFL,SOLF, LPRTJ0, PPP,ZZZ,TTT,HHH,     &
                           DDD,RRR,OOO,CCC, LWPX,IWPX,REFFLX,REFFIX,AERSP,         &
-                          NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q, LDARK,RC)
+                          NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q,     &
+                          LDARK, FSBOT, FJXBOT, FLXD, FJFLX,RC)
                
                      if (.not.LDARK) then
                         JCOUNT = JCOUNT + 1
@@ -531,8 +541,8 @@
 !-----------------------------------------------------------------------
                call PHOTO_JX (U0,SZA,RFL,SOLF, LPRTJ0, PPP,ZZZ,TTT,HHH,     &
                     DDD,RRR,OOO,CCC, LWPX,IWPX,REFFLX,REFFIX,AERSP,         &
-                    NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q, LDARK, RC)
-               
+                    NDXAER, L1U,ANU,NJXU, VALJXXX,SKPERDD,SWMSQQ,OD18Q,     &
+                    LDARK, FSBOT, FJXBOT, FLXD, FJFLX, RC)
                if (.not.LDARK) then
                   JCOUNT = JCOUNT + 1
                endif
